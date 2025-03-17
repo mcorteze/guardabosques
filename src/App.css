@@ -1,38 +1,23 @@
-.App {
-  text-align: center;
+.ant-modal-wrap {
+  padding-inline: 0px !important;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.ant-modal-content {
+  width: 100% !important;
+  margin-inline: 0px !important;
+  padding-top: 4px !important;
+  padding-inline: 4px !important;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.ant-modal-footer button {
+  margin-inline: 10px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.ant-modal-footer button div {
+  display: none;
 }
 
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Elimina el overlay o cualquier div innecesario generado por el modal */
+.ant-modal-mask {
+  display: none !important;
 }

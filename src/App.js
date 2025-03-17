@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { jsPDF } from "jspdf";
+import { Modal, Input, Button } from "antd";
+import { generatePDF } from "./pdfGenerator";
 import "./styles/App.css";
+import "./App.css";
 
 function App() {
   const [formData, setFormData] = useState({
@@ -12,6 +14,8 @@ function App() {
     notas: ""
   });
   const [images, setImages] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeField, setActiveField] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -26,70 +30,15 @@ function App() {
     setImages(imageUrls);
   };
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    
-    // Título: grande, negrita, en color oscuro (contraste)
-    doc.setFontSize(24);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 30, 30); // Gris oscuro
-    doc.text("Registro de Hallazgos", 20, 20);
-    
-    // Nombre debajo del título: tamaño de fuente más pequeño pero legible
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(80, 80, 80); // Gris medio
-    doc.text("José Cortez Echeverria", 20, 30);
-    
-    // Espaciado y detalles en la sección
-    doc.setFontSize(14);
-    doc.setTextColor(50, 50, 50); // Gris oscuro para los detalles
-
-    let y = 40;
-    doc.text(`Hallazgo: ${formData.hallazgo}`, 20, y); y += 10;
-    doc.text(`Ubicación: ${formData.ubicacion}`, 20, y); y += 10;
-    doc.text(`Fecha: ${formData.fecha}`, 20, y); y += 10;
-    doc.text(`Hora: ${formData.hora}`, 20, y); y += 10;
-    
-    // Descripción del hallazgo: se hace un poco más grande para resaltar
-    doc.setFontSize(16);
-    doc.setTextColor(40, 40, 40); // Gris aún más oscuro
-    doc.text("Descripción del Hallazgo:", 20, y); y += 10;
-    doc.setFontSize(14);
-    doc.setTextColor(40, 40, 40);
-    doc.text(formData.descripcion, 30, y, { maxWidth: 160 }); y += 20;
-    
-    // Notas adicionales: gris más suave para las notas
-    doc.setFontSize(16);
-    doc.setTextColor(60, 60, 60); // Gris intermedio
-    doc.text("Notas Adicionales:", 20, y); y += 10;
-    doc.setFontSize(14);
-    doc.setTextColor(60, 60, 60);
-    doc.text(formData.notas, 30, y, { maxWidth: 160 }); y += 20;
-    
-    // Sección de fotos, si existen
-    if (images.length > 0) {
-      doc.addPage();
-      doc.setTextColor(30, 30, 30); // Gris oscuro para la sección de fotos
-      doc.text("Anexos - Fotografías", 20, 20);
-      
-      let x = 20;
-      y = 30;
-      const imgWidth = 180; // Ajuste del tamaño de las fotos
-      const imgHeight = 100;
-
-      images.forEach((img, index) => {
-        if (y + imgHeight > 280) { // Si no cabe en la página, agregamos una nueva
-          doc.addPage();
-          doc.text("Anexos - Fotografías (continuación)", 20, 20);
-          y = 30;
-        }
-        doc.addImage(img, "JPEG", x, y, imgWidth, imgHeight);
-        y += imgHeight + 10;
-      });
+  const openModal = (field) => {
+    if (window.innerWidth < 800) {
+      setActiveField(field);
+      setModalVisible(true);
     }
+  };
 
-    doc.save("hallazgo.pdf");
+  const closeModal = () => {
+    setModalVisible(false);
   };
 
   return (
@@ -98,61 +47,53 @@ function App() {
       <form>
         <label>
           Hallazgo:
-          <input
+          <Input
             type="text"
             name="hallazgo"
             value={formData.hallazgo}
             onChange={handleChange}
+            onClick={() => openModal("hallazgo")}
             required
           />
         </label>
         <label>
           Ubicación:
-          <input
+          <Input
             type="text"
             name="ubicacion"
             value={formData.ubicacion}
             onChange={handleChange}
+            onClick={() => openModal("ubicacion")}
             required
           />
         </label>
         <label>
           Fecha:
-          <input
-            type="date"
-            name="fecha"
-            value={formData.fecha}
-            onChange={handleChange}
-            required
-          />
+          <input type="date" name="fecha" value={formData.fecha} onChange={handleChange} required />
         </label>
         <label>
           Hora:
-          <input
-            type="time"
-            name="hora"
-            value={formData.hora}
-            onChange={handleChange}
-            required
-          />
+          <input type="time" name="hora" value={formData.hora} onChange={handleChange} required />
         </label>
         <br />
         <br />
         <label>
           Descripción del Hallazgo:
-          <textarea
+          <Input.TextArea
             name="descripcion"
             value={formData.descripcion}
             onChange={handleChange}
+            onClick={() => openModal("descripcion")}
             required
           />
         </label>
         <label>
           Notas Adicionales:
-          <textarea
+          <Input.TextArea
             name="notas"
             value={formData.notas}
             onChange={handleChange}
+            onClick={() => openModal("notas")}
           />
         </label>
         <label>
@@ -164,8 +105,28 @@ function App() {
             <img key={index} src={img} alt={`preview-${index}`} className="thumbnail" />
           ))}
         </div>
-        <button type="button" onClick={generatePDF}>Generar PDF</button>
+        <button type="button" onClick={() => generatePDF(formData, images)}>
+          Generar PDF
+        </button>
       </form>
+
+      <Modal
+        title=""
+        open={modalVisible}
+        onCancel={closeModal}
+        footer={[<Button key="ok" type="primary" onClick={closeModal}>Aceptar</Button>]}
+        width="100vw"
+        style={{ top: 0, padding: 0 }}
+        bodyStyle={{ height: "100%", padding: "10px" }}
+        closable={false}
+      >
+        <Input.TextArea
+          value={formData[activeField]}
+          onChange={(e) => setFormData({ ...formData, [activeField]: e.target.value })}
+          autoSize={{ minRows: 20, maxRows: 30 }}
+          style={{ width: "100%", height: "100%", fontSize: "16px", border: "none" }}
+        />
+      </Modal>
     </div>
   );
 }
